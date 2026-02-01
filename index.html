@@ -86,7 +86,7 @@
             color: #333;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            overflow: hidden;
+            overflow: visible;
             cursor: pointer;
             border: none;
             outline: none;
@@ -151,34 +151,37 @@
         /* 平台选择菜单 */
         .platform-menu {
             position: absolute;
-            top: 100%;
+            top: calc(100% + 10px);
             left: 0;
             width: 100%;
             background: rgba(255, 255, 255, 0.98);
-            border-radius: 0 0 20px 20px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
             overflow: hidden;
             opacity: 0;
             visibility: hidden;
-            transform: translateY(-10px);
+            transform: translateY(-20px);
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            z-index: 10;
+            z-index: 100;
+            pointer-events: none;
         }
         
-        #mobile-download:hover .platform-menu {
+        .main-btn:hover .platform-menu {
             opacity: 1;
             visibility: visible;
             transform: translateY(0);
+            pointer-events: auto;
         }
         
         .platform-option {
             display: flex;
             align-items: center;
-            padding: 18px 25px;
+            padding: 20px 25px;
             text-decoration: none;
             color: #333;
             border-bottom: 1px solid rgba(0, 0, 0, 0.05);
             transition: all 0.3s;
+            cursor: pointer;
         }
         
         .platform-option:last-child {
@@ -186,15 +189,20 @@
         }
         
         .platform-option:hover {
-            background: rgba(26, 35, 126, 0.05);
+            background: rgba(26, 35, 126, 0.08);
             padding-left: 30px;
         }
         
         .platform-icon {
-            font-size: 1.8rem;
-            margin-right: 15px;
-            width: 40px;
+            font-size: 2rem;
+            margin-right: 18px;
+            width: 45px;
             text-align: center;
+            transition: transform 0.3s;
+        }
+        
+        .platform-option:hover .platform-icon {
+            transform: scale(1.2);
         }
         
         .android-icon {
@@ -210,20 +218,23 @@
         }
         
         .platform-name {
-            font-size: 1.2rem;
-            font-weight: 600;
-            margin-bottom: 3px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 5px;
         }
         
         .platform-desc {
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             color: #666;
         }
         
         .platform-size {
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             color: #888;
-            font-weight: 500;
+            font-weight: 600;
+            padding: 4px 10px;
+            background: #f5f5f5;
+            border-radius: 12px;
         }
         
         /* 文件大小标签 */
@@ -428,6 +439,15 @@
             .platform-option {
                 padding: 15px 20px;
             }
+            
+            .platform-icon {
+                font-size: 1.6rem;
+                margin-right: 15px;
+            }
+            
+            .platform-name {
+                font-size: 1.1rem;
+            }
         }
         
         /* 动画 */
@@ -555,7 +575,6 @@
         <div class="progress-bar">
             <div class="progress" id="progress"></div>
         </div>
-        <div class="file-status" id="file-status"></div>
     </div>
     
     <div class="container">
@@ -573,13 +592,13 @@
                     <i class="fas fa-mobile-alt"></i>
                 </div>
                 <div class="btn-title">手机下载</div>
-                <div class="btn-description">下载适用于Android和iOS设备的应用</div>
-                <div class="file-size">选择平台</div>
+                <div class="btn-description">点击选择Android或iOS版本</div>
+                <div class="file-size">双平台支持</div>
                 <div class="download-indicator"></div>
                 
                 <!-- 平台选择菜单 -->
                 <div class="platform-menu">
-                    <a href="#" class="platform-option" id="android-download">
+                    <div class="platform-option" id="android-download">
                         <div class="platform-icon android-icon">
                             <i class="fab fa-android"></i>
                         </div>
@@ -588,9 +607,9 @@
                             <div class="platform-desc">漂流瓶.apk</div>
                         </div>
                         <div class="platform-size">25.4 MB</div>
-                    </a>
+                    </div>
                     
-                    <a href="#" class="platform-option" id="ios-download">
+                    <div class="platform-option" id="ios-download">
                         <div class="platform-icon ios-icon">
                             <i class="fab fa-apple"></i>
                         </div>
@@ -599,7 +618,7 @@
                             <div class="platform-desc">漂流瓶.ipa</div>
                         </div>
                         <div class="platform-size">38.2 MB</div>
-                    </a>
+                    </div>
                 </div>
             </div>
             
@@ -640,7 +659,6 @@
             const loader = document.getElementById('loader');
             const loaderText = document.getElementById('loader-text');
             const progress = document.getElementById('progress');
-            const fileStatus = document.getElementById('file-status');
             
             // 文件配置 - 直接从GitHub仓库下载
             const mobileFiles = {
@@ -678,7 +696,6 @@
                 // 显示加载动画
                 loader.classList.add('active');
                 loaderText.textContent = '正在准备下载，请稍候...';
-                fileStatus.textContent = `文件: ${fileConfig.displayName}`;
                 progress.style.width = '0%';
                 
                 // 清除之前的进度
@@ -712,13 +729,13 @@
             
             // Android下载
             androidOption.addEventListener('click', function(e) {
-                e.preventDefault();
+                e.stopPropagation(); // 阻止事件冒泡
                 downloadFromGitHub(mobileFiles.android);
             });
             
             // iOS下载
             iosOption.addEventListener('click', function(e) {
-                e.preventDefault();
+                e.stopPropagation(); // 阻止事件冒泡
                 downloadFromGitHub(mobileFiles.ios);
             });
             
@@ -792,6 +809,45 @@
                     }, 300 + index * 200);
                 });
             }, 1000);
+            
+            // 确保平台选择菜单在移动设备上也能工作
+            let isMobileMenuOpen = false;
+            
+            mobileBtn.addEventListener('click', function(e) {
+                if (window.innerWidth <= 768) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const platformMenu = this.querySelector('.platform-menu');
+                    if (!isMobileMenuOpen) {
+                        platformMenu.style.opacity = '1';
+                        platformMenu.style.visibility = 'visible';
+                        platformMenu.style.transform = 'translateY(0)';
+                        platformMenu.style.pointerEvents = 'auto';
+                        isMobileMenuOpen = true;
+                    } else {
+                        platformMenu.style.opacity = '0';
+                        platformMenu.style.visibility = 'hidden';
+                        platformMenu.style.transform = 'translateY(-20px)';
+                        platformMenu.style.pointerEvents = 'none';
+                        isMobileMenuOpen = false;
+                    }
+                }
+            });
+            
+            // 点击其他地方关闭移动设备上的菜单
+            document.addEventListener('click', function(e) {
+                if (window.innerWidth <= 768 && isMobileMenuOpen) {
+                    if (!mobileBtn.contains(e.target)) {
+                        const platformMenu = mobileBtn.querySelector('.platform-menu');
+                        platformMenu.style.opacity = '0';
+                        platformMenu.style.visibility = 'hidden';
+                        platformMenu.style.transform = 'translateY(-20px)';
+                        platformMenu.style.pointerEvents = 'none';
+                        isMobileMenuOpen = false;
+                    }
+                }
+            });
         });
     </script>
 </body>
